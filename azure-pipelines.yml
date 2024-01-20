@@ -4,28 +4,18 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/java
 
 trigger:
-- main
+- master
 
-pool:
-  name: WindowVm
+pool: WindowVm
 
-jobs:
-- job: BuildJob
-  displayName: 'Build and Test'
-  pool:
-    vmImage: 'windows-latest'
-
-  steps:
-  - task: UseJavaVersion@1
-    inputs:
-      versionSpec: '21.0.2'
-      addToPath: true
-      jdkArchitectureOption: 'x64'
-
-  - task: Maven@3
-    inputs:
-      mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'package'
+steps:
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    mavenOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '21.0.2'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    goals: 'package'
