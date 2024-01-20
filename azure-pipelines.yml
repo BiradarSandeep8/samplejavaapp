@@ -7,7 +7,7 @@ trigger:
 - master
 
 pool:
-  vmImage: WindowVM
+  name: WindowVm
 
 steps:
 - task: Maven@3
