@@ -1,33 +1,22 @@
 trigger:
 - master
 
-resources:
-- repo: self
+pool:
+  name: WindowVm
 
 variables:
-  dockerRegistryServiceConnection: '6e763d1d-34f0-4403-8eff-b3a54f6b743e'
-  imageRepository: 'biradarsandeepsamplejavaapp'
+  # Define your Azure Container Registry information
   containerRegistry: 'azuredb2acr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  imageName: 'biradarsandeepsamplejavaapp'
   tag: '$(Build.BuildId)'
-  pool:
-  name: WindowVm  # Specify your agent pool name
 
-stages:
-- stage: Build
-  displayName: Build and push stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      name: $(agentPoolName)  # Specify the agent pool name
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+steps:
+- task: Docker@2
+  displayName: 'Build and Push Docker Image'
+  inputs:
+    command: 'buildAndPush'
+    repository: '$(containerRegistry)/$(imageName)'
+    Dockerfile: '$(dockerfilePath)'
+    tags: |
+      $(tag)
