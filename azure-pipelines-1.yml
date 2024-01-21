@@ -10,7 +10,7 @@ variables:
   containerRegistry: 'azuredb2acr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
-  vmImageName: 'windows-latest'  # Use a Windows-based image
+  agentPoolName: 'WindowVm'  # Specify your agent pool name
 
 stages:
 - stage: Build
@@ -19,7 +19,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      vmImage: $(vmImageName)
+      name: $(agentPoolName)  # Specify the agent pool name
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
