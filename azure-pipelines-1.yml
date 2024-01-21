@@ -10,7 +10,8 @@ variables:
   containerRegistry: 'azuredb2acr.azurecr.io'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
-  agentPoolName: 'WindowVm'  # Specify your agent pool name
+  pool:
+  name: WindowVm  # Specify your agent pool name
 
 stages:
 - stage: Build
