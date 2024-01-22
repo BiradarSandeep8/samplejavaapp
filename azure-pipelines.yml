@@ -21,20 +21,10 @@ steps:
       testResultsFiles: '**/surefire-reports/TEST-*.xml'
       goals: 'package'
 
-  - powershell: |
-      Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse
-    displayName: 'Debug: List contents of source directory'
-
   - task: CopyFiles@2
     inputs:
       Contents: '**/*.war'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: 'warfile'
-      publishLocation: 'Container'
+      TargetFolder: '$(build.artifactstagingdirectory)'
 
   - powershell: |
       $warFiles = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
@@ -55,10 +45,23 @@ steps:
       Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
 
       try {
-          Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -ErrorAction Stop
+          Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -Force
           Write-Host "WAR file copied successfully!"
       } catch {
           Write-Host "Error copying WAR file: $_"
           exit 1  # Exit with an error code
       }
-    displayName: 'Copy WAR file to Tomcat webapps directory'
+
+      # Restart Tomcat to apply changes
+      Restart-Service -Name 'Tomcat10'
+      Write-Host "Tomcat restarted successfully!"
+      
+      # Wait for Tomcat to start (adjust the sleep duration if needed)
+      Start-Sleep -Seconds 30
+    displayName: 'Deploy WAR file to Tomcat'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'warfile'
+      publishLocation: 'Container'
