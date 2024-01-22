@@ -55,7 +55,7 @@ steps:
         Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
 
         try {
-            Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -ErrorAction Stop
+            Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -Force -ErrorAction Stop
             Write-Host "WAR file copied successfully!"
         } catch {
             Write-Host "Error copying WAR file: $_"
