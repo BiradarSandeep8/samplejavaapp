@@ -37,8 +37,16 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        $warFile = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
-        $tomcatWebappsDir = "C:\path\to\tomcat\webapps"  # Replace with the actual path to your Tomcat webapps directory
+        $warFiles = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
+
+        if ($warFiles.Count -eq 0) {
+            Write-Host "No WAR files found in $(Build.ArtifactStagingDirectory)"
+            exit 1
+        }
+
+        $warFile = $warFiles[0]  # Assuming you have only one WAR file, adjust accordingly
+        $tomcatWebappsDir = "C:\Program Files\Apache Software Foundation\Tomcat 10.1\webapps"
+
         Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir
 
   - task: Docker@2
