@@ -1,8 +1,3 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
-
 trigger:
   - master
 
@@ -38,3 +33,14 @@ steps:
       repository: 'abcdefgh'
       command: 'buildAndPush'
       Dockerfile: '**/Dockerfile'
+
+  - task: AzureRmWebAppDeployment@4
+    inputs:
+      ConnectionType: 'AzureRM'
+      azureSubscription: '2seviceconncn'
+      appType: 'webApp'
+      WebAppName: 'azureDb-web-app'
+      deployToSlotOrASE: true
+      ResourceGroupName: 'sandeepbiradar'
+      SlotName: 'production'
+      packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
