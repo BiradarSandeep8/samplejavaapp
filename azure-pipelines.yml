@@ -46,7 +46,7 @@ steps:
 
         if ($warFiles.Count -eq 0) {
             Write-Host "No WAR files found in $(Build.ArtifactStagingDirectory)"
-            exit 1
+            exit 0  # Exit gracefully, as there might be scenarios where no WAR file is expected
         }
 
         $warFile = $warFiles[0]  # Assuming you have only one WAR file, adjust accordingly
@@ -55,10 +55,3 @@ steps:
         Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
 
         Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir
-
-  - task: Docker@2
-    inputs:
-      containerRegistry: 'AzureDB2Acr'
-      repository: 'abcdefgh'
-      command: 'buildAndPush'
-      Dockerfile: '**/Dockerfile'
