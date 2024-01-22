@@ -39,6 +39,11 @@ steps:
       script: |
         $warFiles = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
 
+        Write-Host "Listing WAR files in $(Build.ArtifactStagingDirectory):"
+        foreach ($warFile in $warFiles) {
+            Write-Host " - $($warFile.FullName)"
+        }
+
         if ($warFiles.Count -eq 0) {
             Write-Host "No WAR files found in $(Build.ArtifactStagingDirectory)"
             exit 1
@@ -46,6 +51,8 @@ steps:
 
         $warFile = $warFiles[0]  # Assuming you have only one WAR file, adjust accordingly
         $tomcatWebappsDir = "C:\Program Files\Apache Software Foundation\Tomcat 10.1\webapps"
+
+        Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
 
         Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir
 
