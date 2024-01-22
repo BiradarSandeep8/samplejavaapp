@@ -1,13 +1,15 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
 trigger:
-- master
+  - master
 
 pool:
   name: WindowVm
 
-jobs:
-- job: BuildAndDeploy
-  displayName: 'Build and Deploy WAR'
-  steps:
+steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
@@ -30,34 +32,9 @@ jobs:
       ArtifactName: 'warfile'
       publishLocation: 'Container'
 
-  - task: PowerShell@2
+  - task: Docker@2
     inputs:
-      targetType: 'inline'
-      script: |
-        # Tomcat service name (assuming it's installed as a service)
-        $serviceName = 'Tomcat9'
-
-        # Tomcat administrative credentials
-        $adminUsername = 'admin'
-        $adminPassword = 'admin'
-
-        # Tomcat shutdown URL
-        $shutdownUrl = "http://$adminUsername:$adminPassword@localhost:8080/manager/text/stop?path=/"
-
-        # Check if the service exists
-        if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
-            try {
-                # Stop Tomcat using the shutdown URL
-                Invoke-WebRequest -Uri $shutdownUrl -Method POST -ErrorAction Stop
-
-                # Wait for Tomcat to stop (adjust the sleep duration based on your Tomcat's shutdown time)
-                Start-Sleep -Seconds 30
-
-                # Start the Tomcat service
-                Start-Service -Name $serviceName
-            } catch {
-                Write-Host "Failed to stop Tomcat: $_"
-            }
-        } else {
-            Write-Host "Tomcat service '$serviceName' not found."
-        }
+      containerRegistry: 'AzureDB2Acr'
+      repository: 'abcdefgh'
+      command: 'buildAndPush'
+      Dockerfile: '**/Dockerfile'
