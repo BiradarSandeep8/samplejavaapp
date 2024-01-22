@@ -1,3 +1,8 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+
 trigger:
   - master
 
@@ -27,20 +32,18 @@ steps:
       ArtifactName: 'warfile'
       publishLocation: 'Container'
 
+  - task: PowerShell@2
+    displayName: 'Copy WAR file to Tomcat webapps directory'
+    inputs:
+      targetType: 'inline'
+      script: |
+        $warFile = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
+        $tomcatWebappsDir = "C:\path\to\tomcat\webapps"  # Replace with the actual path to your Tomcat webapps directory
+        Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir
+
   - task: Docker@2
     inputs:
       containerRegistry: 'AzureDB2Acr'
       repository: 'abcdefgh'
       command: 'buildAndPush'
       Dockerfile: '**/Dockerfile'
-
-  - task: AzureRmWebAppDeployment@4
-    inputs:
-      ConnectionType: 'AzureRM'
-      azureSubscription: '2seviceconncn'
-      appType: 'webApp'
-      WebAppName: 'azureDb-web-app'
-      deployToSlotOrASE: true
-      ResourceGroupName: 'sandeepbiradar'
-      SlotName: 'production'
-      packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
