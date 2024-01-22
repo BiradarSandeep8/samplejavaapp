@@ -22,13 +22,19 @@ steps:
       goals: 'package'
 
   - powershell: |
-      Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Recurse
-    displayName: 'Debug: List contents of artifact directory'
+      Get-ChildItem -Path "$(Build.SourcesDirectory)" -Recurse
+    displayName: 'Debug: List contents of source directory'
 
   - task: CopyFiles@2
     inputs:
       Contents: '**/*.war'
-      TargetFolder: '$(build.artifactstagingdirectory)'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'warfile'
+      publishLocation: 'Container'
 
   - powershell: |
       $warFiles = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
@@ -56,11 +62,3 @@ steps:
           exit 1  # Exit with an error code
       }
     displayName: 'Copy WAR file to Tomcat webapps directory'
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: 'warfile'
-      publishLocation: 'Container'
-
-# ... (remaining steps)
