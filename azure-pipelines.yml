@@ -34,12 +34,30 @@ jobs:
     inputs:
       targetType: 'inline'
       script: |
-        # Assuming Tomcat is running on the same Windows VM
-        Copy-Item -Path '$(build.artifactstagingdirectory)\*.war' -Destination 'C:\path\to\tomcat\webapps'
+        # Tomcat service name (assuming it's installed as a service)
+        $serviceName = 'Tomcat9'
 
-  - task: PowerShell@2
-    inputs:
-      targetType: 'inline'
-      script: |
-        # Assuming Tomcat is running as a service, restart the service
-        Restart-Service -Name 'TomcatServiceName'
+        # Tomcat administrative credentials
+        $adminUsername = 'admin'
+        $adminPassword = 'admin'
+
+        # Tomcat shutdown URL
+        $shutdownUrl = "http://$adminUsername:$adminPassword@localhost:8080/manager/text/stop?path=/"
+
+        # Check if the service exists
+        if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
+            try {
+                # Stop Tomcat using the shutdown URL
+                Invoke-WebRequest -Uri $shutdownUrl -Method POST -ErrorAction Stop
+
+                # Wait for Tomcat to stop (adjust the sleep duration based on your Tomcat's shutdown time)
+                Start-Sleep -Seconds 30
+
+                # Start the Tomcat service
+                Start-Service -Name $serviceName
+            } catch {
+                Write-Host "Failed to stop Tomcat: $_"
+            }
+        } else {
+            Write-Host "Tomcat service '$serviceName' not found."
+        }
