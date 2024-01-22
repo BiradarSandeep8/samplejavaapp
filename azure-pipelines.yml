@@ -1,63 +1,77 @@
-# Maven
-# Build your Java project and run tests with Apache Maven.
-# Add steps that analyze code, save build artifacts, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+# Azure Pipelines YAML
 
 trigger:
-  - master
+- master
 
 pool:
-  name: WindowVm
+  vmImage: 'windows-latest'
 
-steps:
+jobs:
+- job: BuildAndDeploy
+  displayName: 'Build and Deploy'
+  
+  steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '3.1.x'
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      mavenOptions: '-Xmx3072m'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '21.0.2'
-      jdkArchitectureOption: 'x64'
-      publishJUnitResults: true
-      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      goals: 'clean package'
+      goals: 'clean install'
+      options: '-DskipTests=true'
+      mavenVersionOption: 'Path'
+      mavenAuthenticateFeed: false
 
   - task: CopyFiles@2
     inputs:
-      Contents: '**/*.war'
-      TargetFolder: '$(build.artifactstagingdirectory)'
+      sourceFolder: '$(System.DefaultWorkingDirectory)/target'
+      targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - powershell: |
+      # PowerShell script to copy WAR file locally and deploy to Tomcat webapps directory
+
+      # Define paths
+      $warFile = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
+      $localCopyDir = "C:\Program Files\warfolder"  # Update this with the local directory where you want to copy the WAR file
+
+      # Display information
+      Write-Host "Listing WAR files in $(Build.ArtifactStagingDirectory):"
+      $warFile | ForEach-Object { Write-Host " - $($_.FullName)" }
+
+      # Check if WAR file exists
+      if (-not $warFile) {
+          Write-Host "No WAR files found in $(Build.ArtifactStagingDirectory)"
+          exit 1
+      }
+
+      # Copy WAR file locally
+      try {
+          $localCopyPath = Join-Path -Path $localCopyDir -ChildPath $warFile.Name
+          Write-Host "Copying $($warFile.FullName) to $localCopyPath"
+          Copy-Item -Path $warFile.FullName -Destination $localCopyPath -ErrorAction Stop
+          Write-Host "WAR file copied locally to $localCopyPath"
+      } catch {
+          Write-Host "Error copying WAR file locally: $_"
+          exit 1
+      }
+
+      # Deploy WAR file to Tomcat webapps directory
+      $tomcatWebappsDir = "C:\Program Files\Apache Software Foundation\Tomcat 10.1\webapps\sampleapp"  # Update this with the Tomcat webapps directory
+      try {
+          Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
+          Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -ErrorAction Stop
+          Write-Host "WAR file deployed successfully to $tomcatWebappsDir"
+      } catch {
+          Write-Host "Error deploying WAR file to Tomcat: $_"
+          exit 1
+      }
+    displayName: 'Copy and Deploy WAR file'
 
   - task: PublishBuildArtifacts@1
     inputs:
-      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      ArtifactName: 'warfile'
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: 'warfile'
       publishLocation: 'Container'
-
-  - task: PowerShell@2
-    displayName: 'Copy WAR file to Tomcat webapps directory'
-    inputs:
-      targetType: 'inline'
-      script: |
-        $warFiles = Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)\*.war"
-
-        Write-Host "Listing WAR files in $(Build.ArtifactStagingDirectory):"
-        foreach ($warFile in $warFiles) {
-            Write-Host " - $($warFile.FullName)"
-        }
-
-        if ($warFiles.Count -eq 0) {
-            Write-Host "No WAR files found in $(Build.ArtifactStagingDirectory)"
-            exit 0  # Exit gracefully, as there might be scenarios where no WAR file is expected
-        }
-
-        $warFile = $warFiles[0]  # Assuming you have only one WAR file, adjust accordingly
-        $tomcatWebappsDir = "C:\Program Files\Apache Software Foundation\Tomcat 10.1\webapps\ROOT"
-
-        Write-Host "Copying $($warFile.FullName) to $tomcatWebappsDir"
-
-        try {
-            Copy-Item -Path $warFile.FullName -Destination $tomcatWebappsDir -ErrorAction Stop
-            Write-Host "WAR file copied successfully!"
-        } catch {
-            Write-Host "Error copying WAR file: $_"
-            exit 1  # Exit with an error code
-        }
