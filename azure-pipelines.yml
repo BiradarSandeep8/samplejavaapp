@@ -14,7 +14,7 @@ steps:
     mavenPomFile: 'pom.xml'
     mavenOptions: '-Xmx3072m'
     javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '11'
+    jdkVersionOption: '21.0.2'
     jdkArchitectureOption: 'x64'
     goals: 'clean package'
 
